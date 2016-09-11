@@ -54,7 +54,7 @@ cp orders.avsc orders_part_avro.avsc
 # we will specify the column names while creating the table, so we will delete the 'columnName' and 'sqlType' fields from schema
 #change the tableName
 #copy the new schema to hdfs
-hdfs dfs -cp orders_part_avro.avsc /user/cloudera/sqoop_import/avroType/
+hdfs dfs -put orders_part_avro.avsc /user/cloudera/sqoop_import/avroType/
 
 #create the table now
 CREATE TABLE orders_part_avro(
@@ -65,16 +65,16 @@ LOCATION 'hdfs:///user/cloudera/sqoop_import/avroType/orders_part'
 TBLPROPERTIES('avro.schema.url'='hdfs://quickstart.cloudera/user/cloudera/sqoop_import/avroType/orders_part_avro.avsc');
 
 # now alter the table and add partition, this will create the directory with the column name
-alter table orders_part_avro add partition (order_month='2014-01')
+alter table orders_part_avro add partition (order_month='2014-01');
 
 # now insert the data into partition
-insert into table orders_part_avro (order_month='2014-01')
+insert into table orders_part_avro partition (order_month='2014-01')
 select * from orders where from_unixtime(cast(substr(order_date,1,10) as int)) like '2014-01%';
 
 # we can create all the required partitions this way, but that will take a lot of time, so we have dynamic partitioning
 # test the performance of this by running earlier query 
 # drop the table and create it using dynamic partitioning
-
+drop table orders_part_avro;
 CREATE TABLE orders_part_avro(
  order_id int, order_date bigint, order_customer_id int, order_status string) 
 PARTITIONED BY(order_month string)
@@ -90,7 +90,7 @@ set hive.exec.dynamic.partition.mode=nonstrict;
 insert into table orders_part_avro partition(order_month)
 select order_id, order_date, order_customer_id, order_status, substr(from_unixtime(cast(substr(order_date, 1,10) as int)),1,7) as order_month from orders;
 --validating the directories
-hdfs dfs -ls /user/cloudera/sqoop_import/avroType/orders_part/*
+dfs -ls /user/cloudera/sqoop_import/avroType/orders_part/* ;
 
 --Now run the query to test the performance and see the records read in the counters, performance will definitely improve
 select order_status, count(*) from orders_part_avro where order_month='2014-01' group by order_status;
