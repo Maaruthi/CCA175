@@ -1,0 +1,95 @@
+#first we have to start creating the tables in hive in avro file format
+# in the below example, once files are imported using sqoop , we are moving the avro schema files (.avsc) files to hdfs, so that we can use them in the hive table creation
+
+create database avrodb;
+use avrodb;
+
+CREATE EXTERNAL TABLE departments 
+STORED AS AVRO 
+LOCATION 'hdfs:///user/cloudera/sqoop_import/avroType/departments'
+TBLPROPERTIES('avro.schem.url'='hdfs://quickstart.cloudera/user/cloudera/sqoop_import/avroType/sqoop_import_departments.avsc')
+
+CREATE EXTERNAL TABLE categories 
+STORED AS AVRO
+LOCATION 'hdfs:///user/cloudera/sqoop_import/avroType/categories'
+TBLPROPERTIES('avro.schema.url'='hdfs://quickstart.cloudera/user/cloudera/sqoop_import/avroType/sqoop_import_categories.avsc')
+
+CREATE EXTERNAL TABLE customers
+STORED AS AVRO
+LOCATION 'hdfs:///user/cloudera/sqoop_import/avroType/customers'
+TBLPROPERTIES('avro.schema.url'='hdfs://quickstart.cloudera/user/cloudera/sqoop_import/avroType/sqoop_import_customers.avsc')
+
+CREATE EXTERNAL TABLE order_items
+STORED AS AVRO
+LOCATION 'hdfs:///user/cloudera/sqoop_import/avroType/order_items'
+TBLPROPERTIES('avro.schema.url'='hdfs://quickstart.cloudera/user/cloudera/sqoop_import/avroType/sqoop_import_order_items.avsc')
+
+
+CREATE EXTERNAL TABLE orders
+STORED AS AVRO
+LOCATION 'hdfs:///user/cloudera/sqoop_import/avroType/orders'
+TBLPROPERTIES('avro.schema.url'='hdfs://quickstart.cloudera/user/cloudera/sqoop_import/avroType/sqoop_import_orders.avsc')
+
+
+CREATE EXTERNAL TABLE products
+STORED AS AVRO
+LOCATION 'hdfs:///user/cloudera/sqoop_import/avroType/products'
+TBLPROPERTIES('avro.schema.url'='hdfs://quickstart.cloudera/user/cloudera/sqoop_import/avroType/sqoop_import_products.avsc')
+
+# once tables are created we will run a sample query  to check the performace of the system before partitioning
+# from orders table we will want to group the jan 2014 orders by status
+
+select order_status, count(*) from orders where from_unixtime(cast(substr(order_date,1,10) as int)) like '2014_01%' group by order_status ;
+
+# this query took around 22 seconds to run
+# to get the statistics of this query , go to /tmp/cloudera/hive.log , if we dont find the counters information here, we have to go to resource manager UI and check the job history, if this UI is stopped, go to YARN in cloudera manager and start the Job History server
+# if we see the counters in the map phase, this will read all the records as there is no partioning/bucketing
+
+-------------------------------------------------------------------------------------------------------
+# partitioning starts here
+#first copy the existing schema file with a new name and modify it
+cp orders.avsc orders_part_avro.avsc
+# as we are partitioning the table, we have to add a partitioning column on top of existing schema
+#change the name and doc values in the schema
+# we will specify the column names while creating the table, so we will delete the 'columnName' and 'sqlType' fields from schema
+#change the tableName
+#copy the new schema to hdfs
+hdfs dfs -cp orders_part_avro.avsc /user/cloudera/sqoop_import/avroType/
+
+#create the table now
+CREATE TABLE orders_part_avro(
+ order_id int, order_date bigint, order_customer_id int, order_status string) 
+PARTITIONED BY(order_month string)
+STORED AS AVRO
+LOCATION 'hdfs:///user/cloudera/sqoop_import/avroType/orders_part'
+TBLPROPERTIES('avro.schema.url'='hdfs://quickstart.cloudera/user/cloudera/sqoop_import/avroType/orders_part_avro.avsc');
+
+# now alter the table and add partition, this will create the directory with the column name
+alter table orders_part_avro add partition (order_month='2014-01')
+
+# now insert the data into partition
+insert into table orders_part_avro (order_month='2014-01')
+select * from orders where from_unixtime(cast(substr(order_date,1,10) as int)) like '2014-01%';
+
+# we can create all the required partitions this way, but that will take a lot of time, so we have dynamic partitioning
+# test the performance of this by running earlier query 
+# drop the table and create it using dynamic partitioning
+
+CREATE TABLE orders_part_avro(
+ order_id int, order_date bigint, order_customer_id int, order_status string) 
+PARTITIONED BY(order_month string)
+STORED AS AVRO
+LOCATION 'hdfs:///user/cloudera/sqoop_import/avroType/orders_part'
+TBLPROPERTIES('avro.schema.url'='hdfs://quickstart.cloudera/user/cloudera/sqoop_import/avroType/orders_part_avro.avsc');
+-- once table is created, we can do dynamic partitioning and here we have to specify all the column names that we need, we may not be able to use *
+-- hive.exec.max.dynamic.partitions.pernode will set the number of partitions per node. As we are using a single node vm, if the    partitions increase 100, the above dynamic parition query will fail, so, set it to 1000
+set hive.exec.max.dynamic.partitions.pernode=1000;
+
+-- if the below property is strict, it expects atleast one column in the partition before we do this
+set hive.exec.dynamic.partition.mode=nonstrict;
+insert into table orders_part_avro partition(order_month)
+select order_id, order_date, order_customer_id, order_status, substr(from_unixtime(cast(substr(order_date, 1,10) as int)),1,7) as order_month from orders;
+--validating the directories
+hdfs dfs -ls /user/cloudera/sqoop_import/avroType/orders_part/*
+
+--Now run the query to test the performance and see the records read in the counters, performance will definitely improve
