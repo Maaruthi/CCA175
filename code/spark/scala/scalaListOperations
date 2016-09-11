@@ -1,0 +1,32 @@
+# creating a list
+val list = List(1,2,3,2,1,0,6,4,5,7,8,7,5,3)
+# based on the data type of the elements it will infer the data type, we can also specify explicitly as shown below
+val list : List[Int]= List(1,2,3,2,1,0,6,4,5,7,8,7,5,3)
+#to get the number of elements in te list
+list.length
+# to get distinct elements
+list.distinct
+# to get sorted 
+list.sorted
+# to get reverse
+list.reverse
+# to get length of distinct, sorted, reversed list
+list.distinct.sorted.reverse.length
+# to get the  5 elements
+list.distinct.take(5)
+# to read a particular element in the list
+list(0)
+# to add elements
+list.reduce(_+_)
+
+# to create a tuple and read elements
+val t :(Int, Int) = (0,1)
+
+t._1
+
+# to create a tuple, which has a tuple with int and string lists
+val t : (Int, (List[Int], List[String])) = (1, ( List(1,2,3,4), List("hello","world")))
+# to access the 2nd word in the list
+t._2._2(1)
+
+

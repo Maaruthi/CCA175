@@ -1,0 +1,62 @@
+# create a external table using avro data
+hdfs dfs -mkdir /user/cloudera/avroSchemaFiles
+hdfs dfs -put sqoop_import_categories.avsc /user/cloudera/avroSchemaFiles/.
+hdfs dfs -put sqoop_import_products.avsc /user/cloudera/avroSchemaFiles/.
+hdfs dfs -put sqoop_import_departments.avsc /user/cloudera/avroSchemaFiles/.
+
+create database avrodatabase;
+
+use avrodatabase;
+
+CREATE EXTERNAL TABLE departments
+ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.avro.AvroSerDe'
+STORED AS INPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat'
+OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat'
+LOCATION 'hdfs:////user/cloudera/sqoop_import/avroFormat/departments'
+TBLPROPERTIES ('avro.schema.url'='hdfs://quickstart.cloudera/user/cloudera/avroSchemaFiles/sqoop_import_departments.avsc');
+
+CREATE TABLE categories
+ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.avro.AvroSerDe'
+STORED AS INPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat'
+OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat'
+LOCATION 'hdfs:///user/cloudera/sqoop_import/avroFormat/categories'
+TBLPROPERTIES ('avro.schema.url'='/user/cloudera/avroSchemaFiles/sqoop_import_categories.avsc');
+
+#syntactically, differences between the table is only "EXTERNAL" key word, when i dropped the tables, the data got deleted from the hdfs:///user/cloudera/sqoop_import/avroFormat/categories location, as this table is created as managed table but there is no affect to departments
+
+# we can use avro.schema.literal and pass the entire schema as shown below to create the table
+
+CREATE EXTERNAL TABLE departments
+ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.avro.AvroSerDe'
+STORED AS INPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat'
+OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat'
+LOCATION 'hdfs:////user/cloudera/sqoop_import/avroFormat/departments'
+TBLPROPERTIES ('avro.schema.literal' = '{
+  "type" : "record",
+  "name" : "sqoop_import_departments",
+  "doc" : "Sqoop import of departments",
+  "fields" : [ {
+    "name" : "department_id",
+    "type" : [ "int", "null" ],
+    "columnName" : "department_id",
+    "sqlType" : "4"
+  }, {
+    "name" : "department_name",
+    "type" : [ "string", "null" ],
+    "columnName" : "department_name",
+    "sqlType" : "12"
+  } ],
+  "tableName" : "departments"
+}
+');
+
+
+# creating tables in impala-shell
+
+CREATE EXTERNAL TABLE categories
+STORED AS AVRO
+LOCATION 'hdfs:///user/cloudera/sqoop_import/avroFormat/categories'
+TBLPROPERTIES ('avro.schema.url'='/user/cloudera/avroSchemaFiles/sqoop_import_categories.avsc');
+
+
+

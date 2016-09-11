@@ -1,0 +1,21 @@
+# there are 4 ways to do data aggregation by key : groupByKey, reduceByKey, aggregateByKey and combineByKey
+
+ordersRDD = sc.textFile("/user/cloudera/sqoop_import/orders")
+ordersMap = ordersRDD.map(lambda x: (x.split(",")[3],1))
+ordersMapWithData = ordersRDD.map(lambda x: (x.split(",")[3],x))
+
+
+#ordersByKey using groupByKey
+ordersByStatus = ordersMap.groupByKey().map(lambda (x,y) : (x,sum(y)))
+
+#ordersByKey using reduceByKey
+ordersByStatus = ordersMap.reduceByKey(lambda acc, y : acc +y)
+
+#ordersByKey using aggregateByKey
+#note that below zero value is per combiner as per the logic below
+#as there are 12 partitions on the hdfs file,if we keep 1 as zerovalue, we will get 12 more in the final value
+# we can configure only the reduce tasks, combiner tasks depend on the number of partitions
+ordersByStatus = ordersMapWithData.aggregateByKey(0, lambda acc,val : acc+1, lambda acc,val : acc+val )
+
+#ordersByKey using combineByKey
+ordersByStatus = ordersMapWithData.combineByKey(lambda val=1, lambda acc,val : acc+1, lambda acc,val : acc+val )

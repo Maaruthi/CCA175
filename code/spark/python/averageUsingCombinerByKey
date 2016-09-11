@@ -1,0 +1,37 @@
+#caluculating total revenue per day
+
+ordersRDD = sc.textFile("/user/cloudera/sqoop_import/orders")
+orderItemsRDD = sc.textFile("/user/cloudera/sqoop_import/order_items")
+
+ordersParsedRDD = ordersRDD.map(lambda x : (x.split(",")[0],x))
+orderItemsParsedRDD = orderItemsRDD.map(lambda x : (x.split(",")[1],x))
+
+joinRDD = ordersParsedRDD.join(orderItemsParsedRDD )
+
+
+joinParsedRDD = joinRDD.map(lambda x : (x[1][0].split(",")[1],float(x[1][1].split(",")[4]))).reduceByKey(lambda x,y : x+y).sortByKey()
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+# average revenue per day per order
+
+ordersRDD = sc.textFile("/user/cloudera/sqoop_import/orders")
+orderItemsRDD = sc.textFile("/user/cloudera/sqoop_import/order_items")
+
+ordersParsedRDD = ordersRDD.map(lambda x : (x.split(",")[0],x))
+orderItemsParsedRDD = orderItemsRDD.map(lambda x : (x.split(",")[1],x))
+
+joinRDD = ordersParsedRDD.join(orderItemsParsedRDD )
+
+
+joinParsedRDD = joinRDD.map(lambda x : ((x[1][0].split(",")[1],x[0]),float(x[1][1].split(",")[4])))
+
+revenuePerDayPerOrder = joinParsedRDD.reduceByKey(lambda x,y : x+y)
+revenuePerDayPerOrderMap = revenuePerDayPerOrder.map(lambda x : (x[0][0],x[1]))
+
+# combineByKey parameters are "creating a combiner", "merging the value" and "merging the combiner"
+revenuePerDayPerOrder = revenuePerDayPerOrderMap.combineByKey(lambda value : (value,1),lambda acc,val :(acc[0]+val, acc[1]+1), lambda val1, val2 : (round(val1[0]+val2[0],2) , val1[1]+val2[1]))
+# same functionality can be achieved through aggregateByKey
+revenuePerDayPerOrder = revenuePerDayPerOrderMap.aggregateByKey((0,0),lambda acc,val :(acc[0]+val, acc[1]+1), lambda val1, val2 : (round(val1[0]+val2[0],2) , val1[1]+val2[1]))
+avgRevenuePerDayPerOrder = revenuePerDayPerOrder.map(lambda x: (x[0],x[1][0]/x[1][1]))
+
+

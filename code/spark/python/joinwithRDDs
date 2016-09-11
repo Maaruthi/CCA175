@@ -1,0 +1,35 @@
+# in this example we are joining data from orders and order_items tables
+
+# load the data from orders table
+orders = sc.textFile("/user/cloudera/sqoop_import/orders")
+
+# load the data from order_items table
+orderItems = sc.textFile("/user/cloudera/sqoop_import/order_items")
+
+# read the data from both the rdds with order_id as the key and remaining fields as value
+# we are also type casting the order_id to int
+ordersParsedRDD = orders.map(lambda x : (int(x.split(",")[0]) , x))
+orderItemsParsedRDD = orderItems.map(lambda x : (int(x.split(",")[1]),x))
+
+# joining the two rdds
+joinRDD = orderItemsParsedRDD.join(ordersParsedRDD)
+
+# taking total revenue per day per rdd
+revenuePerOrderPerDay = joinRDD.map(lambda t : (t[1][1].split(",")[1] ,float(t[1][0].split(",")[4])))
+totalRevenuesPerDayRDD = revenuePerOrderPerDay.reduceByKey(lambda x,y : x+y)
+
+# taking distinct orders perDay
+ordersPerDayRDD = joinRDD.map(lambda rec: (rec[1][1].split(",")[1] + "," +str(rec[0]))).distinct()
+ordersPerDayParsedRDD = ordersPerDayRDD.map(lambda rec: (rec.split(",")[0],1))
+totalOrdersPerDayRDD = ordersPerDayParsedRDD.reduceByKey(lambda x,y : x+y )
+
+
+# this rdd will have the day wise total sum and number of orders
+finalRDD = totalRevenuesPerDayRDD.join(totalOrdersPerDayRDD)
+
+#sorting the RDD by key and printing
+
+sortedRDD = finalRDD.sortByKey()
+for i in sortedRDD.collect():
+ print(i)
+

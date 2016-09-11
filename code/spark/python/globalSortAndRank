@@ -1,0 +1,20 @@
+#creating products RDD
+products = sc.textFile("/user/cloudera/sqoop_import/products")
+
+#creating an RDD to make the 4th column as key and the rec as value, sorting it by key and printing
+for rec in products.map(lambda rec :(float(rec.split(",")[4]),rec)).sortByKey().collect(): print rec
+
+# sortByKey() by default sorts in ascending order, to make it descending, give it optional boolean parameter as False
+for rec in products.map(lambda rec :(float(rec.split(",")[4]),rec)).sortByKey(False).take(5): print rec
+
+# to sort it by multiple values, we have to include those fields in the key , below command will apply the same order to both fields in the key
+for rec in products.map(lambda rec :((float(rec.split(",")[4]),int(rec.split(",")[0])),rec)).sortByKey(False).take(5): print rec
+
+# top only sorts data in descending order and returns the specified number of records.So, if we want to sort in descending order, we can use top
+for rec in products.map(lambda rec :((float(rec.split(",")[4]),int(rec.split(",")[0])),rec)).top(5): print rec
+
+# to customize the sorting and for more flexibility, we can use takeOrdered, in the below example, we are sorting first value by descending and the next by ascending
+# we are able to specify - as this column is a number column
+for rec in products.map(lambda rec :((float(rec.split(",")[4]),int(rec.split(",")[0])),rec)).takeOrdered(5,lambda rec : (-rec[0][0],rec[0][1])): print rec
+
+

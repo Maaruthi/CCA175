@@ -1,0 +1,49 @@
+#loading data from text file
+orderItemsRDD = sc.textFile("/user/cloudera/sqoop_import/order_items")
+#split and take the 5th column as it has the price
+orderItemsMap = orderItemsRDD.map(lambda x : float(x.split(",")[4]))
+#now use reduce to find the total price
+totalPrice = orderItemsMap.reduce(lambda x,y:x+y)
+
+#finding the maximum priced product from products table
+productsRDD = sc.textFile("/user/cloudera/sqoop_import/products")
+productsMap = productsRDD.map(lambda rec : rec.split(","))
+maxPricedProduct = productsMap.reduce(lambda x,y : x if(float(x[4]) > float(y[4])) else y)
+
+# when we ran this, job failed saying that float has an empty string, that means that data has some issue, to find this we will go to hive and check what the issue is
+#first checking if we have any entries which has null value for product_price
+select * from products where product_price is NULL
+# i could not find any products with empty product_price, so i have doubted if product_name or product_description columns might have ","  in their values and as this is a delimiter that might be causing the problem
+
+select * from products where product_description like '%,%';
+select * from products where product_name like '%,%';
+# here we found a row which has a product_name with "," , now we have to delete that row, to do that below are the commands
+
+hadoop fs -get /user/cloudera/sqoop_import/products/ .
+grep "TaylorMade" *
+# deleting the line from the file without opening it
+sed '/TaylorMade SLDR Irons - (Steel)/d;' < part-m-00006 > part-m-00006_n
+mv part-m-00006_n part-m-00006
+
+# now replace the file on hdfs with this new file
+hadoop fs -put -f part-m-00006 /user/cloudera/sqoop_import/products/
+
+# now rerun the commands and  we will get the record with highest product price
+# to cross check we can use hive to confim
+
+select * from products order by product_price desc limit 1;
+
+# record matches hoola!! 
+
+---------------------------------------------------------------------
+# finding the avg price of order_items
+
+orderItemsRDD = sc.textFile("/user/cloudera/sqoop_import/order_items")
+
+orderItemsMap = orderItemsRDD.map(lambda x : x.split(","))
+totalAmount = orderItemsMap.map(lambda x:float(x[4])).reduce(lambda x,y : x+y)
+
+numberOfOrders = orderItemsMap.map(lambda x : x[1]).distinct().count()
+
+avgOrderAmount = totalAmount/numberOfOrders
+print avgOrderAmount

@@ -1,0 +1,6 @@
+val data = sc.textFile("/user/cloudera/wordCount.txt")
+val words = data.flatMap(x => x.split(" "))
+val wordTuple = words.map(x => (x,1))
+val wordCount = wordTuple.reduceByKey((x,y) => x +y)
+wordCount.map(x => x.swap).sortByKey(false).map(y => y.swap).saveAsTextFile("/user/cloudera/WordCountResult")
+

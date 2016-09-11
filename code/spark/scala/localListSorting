@@ -1,0 +1,31 @@
+#sorting inside the list of values
+
+val products = sc.textFile("/user/cloudera/sqoop_import/products")
+val productsMap = products.map(rec => (rec.split(",")(1),rec))
+val productsGroupBy = productsMap.groupByKey()
+productsGroupBy.collect().foreach(println)
+
+val productsGroupSorted = productsGroupBy.map(x => (x._1, x._2.toList.sortBy(x => x.split(",")(4).toFloat))).collect().foreach(println)
+
+# to sort the data in reverse order, only difference is "-"
+val productsGroupSorted = productsGroupBy.map(x => (x._1, x._2.toList.sortBy(x => -x.split(",")(4).toFloat))).collect().foreach(println)
+
+# we can use flatmap to get the flattened results, note that here we are using only the iterable/list as flatmap takes in list/array
+
+val productsGroupSorted = productsGroupBy.flatMap(x => ( x._2.toList.sortBy(x => x.split(",")(4).toFloat))).collect().foreach(println)
+
+
+# define  normal functions to sort and use it
+
+def sort_flat(rec: (String, Iterable[String])):(Iterable[String]) = {
+return rec._2.toList.sortBy(x => x.split(",")(4).toFloat)
+}
+
+val productsGroupSorted = productsGroupBy.flatMap(sort_flat(_)).collect().foreach(println)
+
+
+def sort(rec: (String, Iterable[String])) : (String, Iterable[String]) = {
+return (rec._1, rec._2.toList.sortBy(x => x.split(",")(4).toFloat))
+}
+val productsGroupSorted = productsGroupBy.map(x => sort(x)).collect().foreach(println)
+

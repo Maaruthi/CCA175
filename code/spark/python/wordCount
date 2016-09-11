@@ -1,0 +1,17 @@
+ #first read the file from hdfs and create an rdd
+data = sc.textFile("/user/cloudera/wordCount.txt")
+
+# split the file using space as the delimiter and use flatmap to get the words
+flatData = data.flatMap(lambda x : x.split(" "))
+
+# then create a key, value pair using map
+mapData = flatData.map(lambda x : (x,1))
+
+# use reduceByKey to reduce by key and get the number of occurences of each word
+countData = mapData.reduceByKey(lambda x,y : x+y)
+
+# to loop through the data and print
+for line in countData.collect():
+  print(data)
+
+

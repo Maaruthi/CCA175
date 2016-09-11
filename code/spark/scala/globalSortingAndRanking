@@ -1,0 +1,16 @@
+#various ways to sort the products by price and get them
+val products = sc.textFile("/user/cloudera/sqoop_import/products")
+val productsRDD = products.map(x => (x.split(",")(4).toFloat,x))
+productsRDD.sortByKey().collect().foreach(println)
+
+# by default sortByKey sorts in ascending order, to sort in descending order, we have to pass parameter to sortByKey
+productsRDD.sortByKey(false).collect().foreach(println)
+
+#top will sort the records by key in descending order and give the specified number of records
+productsRDD.top(5).foreach(println)
+
+#using takeOrdered , note that we are performing the map tasks also in this and as we are using reverse, data is sorted in descending order
+products.takeOrdered(5)(Ordering[Float].reverse.on(x=> x.split(",")(4).toFloat)).foreach(println)
+
+# data will be sorted in ascending order if we delete reverse as shown below
+products.takeOrdered(5)(Ordering[Float].on(x=> x.split(",")(4).toFloat)).foreach(println)

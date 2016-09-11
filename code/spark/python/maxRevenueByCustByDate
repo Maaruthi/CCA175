@@ -1,0 +1,29 @@
+# after making join between the data sets, first take the date and custID combination and group by it - if we directly group only by date, several custID's data will get merged and if we directly merge by custID, several date's data can get merged - now we will have per day, per custID revenue. To find the max out of it by day, make the day as key and run reduce function as shown below.
+orders = sc.textFile("/user/cloudera/sqoop_import/orders")
+orderItems = sc.textFile("/user/cloudera/sqoop_import/order_items")
+
+ordersRDD = orders.map(lambda x: (x.split(",")[0], x)) 
+orderItemsRDD = orderItems.map(lambda x: (x.split(",")[1], x)) 
+
+joinRDD = ordersRDD.join(orderItemsRDD)
+
+ordersPerDayPerCustomer = joinRDD.map(lambda s: ((s[1][0].split(",")[1],s[1][0].split(",")[2]),float(s[1][1].split(",")[4])))
+
+ordersPerDayPerCustomerGroup = ordersPerDayPerCustomer.reduceByKey(lambda x,y : x+y)
+
+
+revenuePerDayPerCustomer = ordersPerDayPerCustomerGroup.map(lambda s: (s[0][0],(s[0][1],s[1])))
+
+maxOrderPerDayPerCustomer = revenuePerDayPerCustomer.reduceByKey(lambda x,y : x if(x[1] > y[1]) else y)
+
+#we can achieve the functionality done by lambda with a normal function also as shown below
+def max(x,y):
+ if (x[1] > y[1]):
+  return x
+ else:
+  return y
+
+
+maxOrderPerDayPerCustomer = revenuePerDayPerCustomer.reduceByKey(lambda x,y : max(x,y))
+
+

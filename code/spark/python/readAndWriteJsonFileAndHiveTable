@@ -1,0 +1,60 @@
+#To read data from hive, first we have to set the HiveContext
+from pyspark.sql import HiveContext
+hiveContext = HiveContext(sc)
+# Now we can read the data from hive tables, before doing that we have to make sure
+# that we have this table in the appropriate database and also the hive-site.xml should be placed in the spark conf directory or a soft link should be created
+data = hiveContext.sql("select * from depart")
+# To print the data
+for value in data.collect():
+    print(value)
+
+# To get specific values we can either read only that value from database or print only that value after reading whole set
+dataID = hiveContext.sql("select id from depart")
+for idValue in dataID.collect():
+   print(idValue)
+
+
+data= hiveContext.sql("select * from depart")
+for val in data.collect():
+  print(val.name)
+
+# we can also access fields by column numbers
+for val in data.collect():
+  print(val[1])
+
+# we can also use any database in Hive using the '.' notation, for example we are using sqoop_import database below
+data = hiveContext.sql("select * from sqoop_import.departments")
+
+# we can write into hive from spark and we can also create tables in hive from spark, any INSERT, LOAD query can be executed in HiveContext
+hiveContext.sql("create table depart3 as select * from depart")
+
+# we can read and write from and to Json files, for this we are creating a sample Json file
+
+{"id":2 , "name":"kesava"}
+{"id":3 , "name":"ayyappa"}
+{"id":4 , "name":"ganesh"}
+{"id":5 , "name":"sai"}
+{"id":6 , "name":"alla"}
+{"id":7 , "name":"jesus"}
+{"id":8 , "name":"hara"}
+{"id":9 , "name":"krishna"}
+{"id":10 , "name":"rama"}
+
+
+# To read a json file from hdfs sqlContext is enough, we need not specify HiveContext
+
+sqlContext = SQLContext(sc)
+depart = sqlContext.jsonFile("/user/cloudera/pyspark/departments.json")
+
+# register the temp table and read from it
+depart.registerTempTable("djson")
+departdata = sqlContext.sql("select * from djson")
+for i in sqlcontext.sql("select * from djson").collect():
+  print(i)
+
+# To write into Json we can use toJSON and saveAsTextFile
+
+departdata.toJSON().saveAsTextFile("/user/cloudera/pyspark/savedJson")
+
+
+

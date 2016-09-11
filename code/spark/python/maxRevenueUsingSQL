@@ -1,0 +1,6 @@
+#To run in hive context,we have to import the hive context
+from pyspark.sql import HiveContext
+hiveCtx = HiveContext(sc)
+hiveCtx.sql("set spark.sql.shuffle.partitions=10")
+
+#lets do it later :)  

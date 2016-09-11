@@ -1,0 +1,16 @@
+# reading from a hive table
+import org.apache.spark.sql.hive.HiveContext
+val hiveCtx= new HiveContext(sc)
+val dept = hiveCtx.sql("select * from sqoop_import.departments")
+dept.collect().foreach(println)
+
+# reading from a json file
+
+import org.apache.spark.sql.SQLContext
+val sqlCtx = new SQLContext(sc)
+
+val dept = sqlCtx.jsonFile("/user/cloudera/jsonFile")
+
+dept.collect().foreach(println)
+
+dept.toJSON.saveAsTextFile("/user/cloudera/jsonFile2")

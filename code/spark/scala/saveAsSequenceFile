@@ -1,0 +1,13 @@
+# we can save as sequence file by using either saveAsSequenceFile or saveAsNewAPIHadoopFile
+
+import org.apahe.hadoop.io._
+dataRDD.map(x => (NullWritable.get(),x)).saveAsSequenceFile("/user/cloudera/spark/scala/departmentsSeqNull")
+dataRDD.map(x => (x.split(",")(0),x.split(",")(1))).saveAsSequenceFile("/user/cloudera/spark/scala/departmentsSeqData")
+
+import org.apache.hadoop.mapreduce.lib.output._
+
+dataRDD.map(x => (new Text(x.split(",")(0)),new Text(x.split(",")(1)))).saveAsNewAPIHadoopFile("/user/cloudera/spark/scala/departmentsSeqDataNewAPI",classOf[Text],classOf[Text], classOf[SequenceFileOutputFormat[Text,Text]] )
+
+#reading from a sequence file
+
+sc.sequenceFile("/user/cloudera/spark/scala/departmentsSeqData", classOf[IntWritable] , classOf[Text] ).collect().foreach(println)

@@ -1,0 +1,15 @@
+val orders = sc.textFile("/user/cloudera/sqoop_import/orders")
+val orderItems = sc.textFile("/user/cloudera/sqoop_import/order_items")
+
+val ordersRDD = orders.map(x => ((x.split(",")(0)), x.split(",")(1)))
+val orderItemsRDD = orderItems.map(x => ((x.split(",")(1)), (x.split(",")(4)).toFloat))
+
+val ordersJoinOrderItems = ordersRDD.join(orderItemsRDD)
+
+val revenuePerDayPerOrder = ordersJoinOrderItems.map(x => ((x._2._1,x._1),x._2._2)).reduceByKey( (x,y) => x+y).map(x => (x._1._1,x._2))
+val revenueAndOrderCountPerDay = revenuePerDayPerOrder.aggregateByKey((0.0,0))(((acc, value) => (acc._1+value, acc._2 +1)),((value1,value2) => (value1._1 + value2._1, value1._2 + value2._2) ))
+
+
+val averageRDD = revenueAndOrderCountPerDay.map(x => (x._1, Math.round(x._2._1/x._2._2))).sortByKey()
+averageRDD.collect().foreach(println)
+

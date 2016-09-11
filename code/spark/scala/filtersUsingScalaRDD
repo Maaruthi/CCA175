@@ -1,0 +1,17 @@
+val ordersRDD = sc.textFile("/user/cloudera/sqoop_import/orders")
+
+# to get all the orders which are complete, equals will provide the exact match and contains will get all the values which contain the given value
+ordersRDD.filter(_.split(",")(3).contains("COMPLETE")).collect().foreach(println)
+ordersRDD.filter(_.split(",")(3).equals("COMPLETE")).collect().foreach(println)
+
+# to do and operations, we have to use && and for or operations we have to use ||
+
+ordersRDD.filter(line => line.split(",")(3).equals("COMPLETE") && line.split(",")(0).toInt > 68000 ).collect().foreach(println)
+ordersRDD.filter(line => (line.split(",")(4).equals("COMPLETE") ||  line.split(",")(3).contains("PENDING")) && line.split(",")(0).toInt > 68500 ).collect().foreach(println)
+
+# we have to use ! for negation
+
+ordersRDD.filter(line => !line.split(",")(3).equals("COMPLETE") && line.split(",")(0).toInt > 68800 ).collect().foreach(println)
+
+
+

@@ -1,0 +1,19 @@
+val orders = sc.textFile("/user/cloudera/sqoop_import/orders")
+val orderItems = sc.textFile("/user/cloudera/sqoop_import/order_items")
+
+val ordersRDD = orders.map(x => ((x.split(",")(0)), x.split(",")(1)))
+val orderItemsRDD = orderItems.map(x => ((x.split(",")(1)), (x.split(",")(4)).toFloat))
+
+val ordersJoinOrderItems = ordersRDD.join(orderItemsRDD)
+
+val revenuePerDay = ordersJoinOrderItems.map(x => (x._2._1,x._2._2)).reduceByKey( (x,y) => x+y)
+val ordersPerDay = ordersJoinOrderItems.map(x => x._2._1 + "," + x._1).distinct().map(x => (x.split(",")(0),1)).reduceByKey( (x,y) => x+y)
+
+val finalRDD = ordersPerDay.join(revenuePerDay)
+
+
+
+
+
+
+

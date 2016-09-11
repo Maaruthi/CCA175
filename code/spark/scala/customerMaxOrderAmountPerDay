@@ -1,0 +1,29 @@
+val orders = sc.textFile("/user/cloudera/sqoop_import/orders")
+val orderItems = sc.textFile("/user/cloudera/sqoop_import/order_items")
+
+val ordersRDD = orders.map(x => ((x.split(",")(0)),( x.split(",")(1), x.split(",")(2))))
+val orderItemsRDD = orderItems.map(x => ((x.split(",")(1)), (x.split(",")(4)).toFloat))
+
+val ordersJoinOrderItems = ordersRDD.join(orderItemsRDD)
+
+val revenuePerDayPerCustomerPerOrder = ordersJoinOrderItems.map(x => (((x._2._1._1),(x._2._1._2)),x._2._2))
+val revenuePerDayPerCustomer = revenuePerDayPerCustomerPerOrder.reduceByKey((x,y) => x+y).map(x => (x._1._1 ,(x._1._2,x._2)))
+
+
+val customerWithMaxRevenuePerDay =revenuePerDayPerCustomer.reduceByKey((x,y) => if(x._2 > y._2) x else y)
+
+customerWithMaxRevenuePerDay.sortByKey().collect().foreach(println)
+-----------------------------------------------------------------------------------------------------------------------
+# using regular function to find max
+
+def findMax(x : (String,Float), y : (String, Float)) :(String,Float)= {
+if(x._2 > y._2)
+  return x
+else
+  return y
+}
+
+
+val customerWithMaxRevenuePerDay =revenuePerDayPerCustomer.reduceByKey((x,y) => findMax(x,y))
+
+-------------------------------------------------------------------------------------------------------------------------------------------

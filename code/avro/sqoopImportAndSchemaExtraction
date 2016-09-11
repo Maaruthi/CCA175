@@ -1,0 +1,20 @@
+#To extract the schema first we need the data to be in avro file format, so importing all the tables from mysql
+
+sqoop import-all-tables --connect "jdbc:mysql://quickstart.cloudera:3306/retail_db" --username=retail_dba --password=cloudera --as-avrodatafile --warehouse-dir="/user/cloudera/sqoop_import/avroData" -m=2
+
+# getmeta will provide the metadata of an avro data file
+avro-tools getmeta part-m-00000.avro
+
+# getschema will provide the schema of an avro data file
+avro-tools getschema part-m-00000.avro
+
+# to get the json format file from avro file
+avro-tools tojson part-m-00000.avro
+
+# to get a avro file from json
+avro-tools fromjson part.json --schema-file departments.avsc
+
+
+# to save the outputs, we can redirect them to files
+
+

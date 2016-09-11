@@ -1,0 +1,26 @@
+# To read the data from a textFile
+dataRDD = sc.textFile("/user/cloudera/sqoop_import/depart")
+
+# lopping through the rdd and printing
+for i in dataRDD.collect():
+   print(i)
+
+# to get the number of rows in the rdd
+dataRDD.count()
+
+# to save data as a textfile
+dataRDD.saveAsTextFile("/user/cloudera/pyspark/departments")
+
+# to save as a sequence file after using map function to map the key, value pairs
+dataRDD.map(lambda x: tuple(x.split(",",1))).saveAsSequenceFile("/user/cloudera/pyspark/departmentsSeq")
+ 	 
+# reading data from a sequence file, we can read it without specifying the data types or we can specify the data types
+data=sc.sequenceFile("/user/cloudera/pyspark/departmentsSeq")
+
+data = sc.sequenceFile("/user/cloudera/pyspark/departmentsSeq","org.apache.hadoop.io.IntWritable","org.apache.hadoop.io.Text")
+
+# we can use newAPIHadoopFile and saveAsNewAPIHadoopFile to read and write data into any hadoop file format
+
+data = sc.newAPIHadoopFile("/user/cloudera/pyspark/departmentsSeq","org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat",keyClass="org.apache.hadoop.io.IntWritable",valueClass="org.apache.hadoop.io.Text")
+
+dataRDD.map(lambda x: tuple(x.split(",",1))).saveAsNewAPIHadoopFile("/user/cloudera/pyspark/departmentsSeq","org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat",keyClass="org.apache.hadoop.io.Text",valueClass="org.apache.hadoop.io.Text")

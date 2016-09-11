@@ -1,0 +1,29 @@
+#loading the data using spark
+ordersRDD = sc.textFile("/user/cloudera/sqoop_import/orders")
+
+# to filter the complete orders
+for i in ordersRDD.filter(lambda rec : rec.split(",")[3] == "COMPLETE").take(5) : print i
+
+# to filter the orders which has PENDING in them
+for i in ordersRDD.filter(lambda rec : "PENDING" in rec.split(",")[3]).take(100) : print i
+
+# to filter the lines which has order id greater than 1000 and status is cancelled or has PENDING in them
+
+for i in ordersRDD.filter(lambda rec : (rec.split(",")[0] > 1000 and (rec.split(",")[3] == "CANCELED" or "PENDING" in rec.split(",")[3]))).take(20): print i
+
+for i in ordersRDD.filter(lambda rec : (rec.split(",")[0] > 1000 and (rec.split(",")[3] != "CANCELED" or "PENDING" in rec.split(",")[3]))).take(20): print i
+
+------------------------------------------------------------------------------
+
+# check if there are any cancelled orders with amount greater than 1000 dollars
+
+ordersRDD = sc.textFile("/user/cloudera/sqoop_import/orders")
+orderItemsRDD = sc.textFile("/user/cloudera/sqoop_import/order_items")
+
+ordersParsedRDD = ordersRDD.filter(lambda rec: rec.split(",")[3] in "CANCELED").map(lambda rec: (int(rec.split(",")[0]),rec))
+orderItemsParsedRDD = orderItemsRDD.map(lambda rec: rec.split(",")).map(lambda rec: (int(rec[1]),float(rec[5]))).reduceByKey(lambda x,y: x+y)
+
+
+finalRDD = ordersParsedRDD.join(orderItemsParsedRDD).filter(lambda x: x[1][1] > 1000)
+
+finalRDD.count()

@@ -1,0 +1,10 @@
+# read products data
+productsRDD = sc.textFile("/user/cloudera/sqoop_import/products")
+productsMap = productsRDD.map(lambda rec: (rec.split(",")[1], rec))
+
+# to group the products by key
+ productsGroupByCat = productsMap.groupByKey()
+# if we print the elements in the above rdd, it is not readable as the value is an iterable object, so i can map it to a list
+ for i in productsGroupByCat.map(lambda x : (x[0], list(x[1]))).take(1) : print i
+
+

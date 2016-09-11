@@ -1,0 +1,10 @@
+# import HiveContext first create Hive context from spark context
+from pyspark import HiveContext
+HiveCtx = HiveContext(sc)
+
+joinRDD = hiveCtx.sql("select o.order_date, sum(oi.order_item_subtotal) , count( distinct oi.order_item_order_id ) from orders o join order_items oi on o.order_id = oi.order_item_order_id group by o.order_date order by o.order_date")
+
+# by default spark is issuing 200 tasks for the above query, it is default, we can change it by setting the below value
+hiveCtx.sql("set spark.sql.shuffle.partitions=10");
+ 
+
