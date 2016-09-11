@@ -7,34 +7,34 @@ use avrodb;
 CREATE EXTERNAL TABLE departments 
 STORED AS AVRO 
 LOCATION 'hdfs:///user/cloudera/sqoop_import/avroType/departments'
-TBLPROPERTIES('avro.schema.url'='hdfs://quickstart.cloudera/user/cloudera/sqoop_import/avroType/sqoop_import_departments.avsc')
+TBLPROPERTIES('avro.schema.url'='hdfs://quickstart.cloudera/user/cloudera/sqoop_import/avroType/sqoop_import_departments.avsc');
 
 CREATE EXTERNAL TABLE categories 
 STORED AS AVRO
 LOCATION 'hdfs:///user/cloudera/sqoop_import/avroType/categories'
-TBLPROPERTIES('avro.schema.url'='hdfs://quickstart.cloudera/user/cloudera/sqoop_import/avroType/sqoop_import_categories.avsc')
+TBLPROPERTIES('avro.schema.url'='hdfs://quickstart.cloudera/user/cloudera/sqoop_import/avroType/sqoop_import_categories.avsc');
 
 CREATE EXTERNAL TABLE customers
 STORED AS AVRO
 LOCATION 'hdfs:///user/cloudera/sqoop_import/avroType/customers'
-TBLPROPERTIES('avro.schema.url'='hdfs://quickstart.cloudera/user/cloudera/sqoop_import/avroType/sqoop_import_customers.avsc')
+TBLPROPERTIES('avro.schema.url'='hdfs://quickstart.cloudera/user/cloudera/sqoop_import/avroType/sqoop_import_customers.avsc');
 
 CREATE EXTERNAL TABLE order_items
 STORED AS AVRO
 LOCATION 'hdfs:///user/cloudera/sqoop_import/avroType/order_items'
-TBLPROPERTIES('avro.schema.url'='hdfs://quickstart.cloudera/user/cloudera/sqoop_import/avroType/sqoop_import_order_items.avsc')
+TBLPROPERTIES('avro.schema.url'='hdfs://quickstart.cloudera/user/cloudera/sqoop_import/avroType/sqoop_import_order_items.avsc');
 
 
 CREATE EXTERNAL TABLE orders
 STORED AS AVRO
 LOCATION 'hdfs:///user/cloudera/sqoop_import/avroType/orders'
-TBLPROPERTIES('avro.schema.url'='hdfs://quickstart.cloudera/user/cloudera/sqoop_import/avroType/sqoop_import_orders.avsc')
+TBLPROPERTIES('avro.schema.url'='hdfs://quickstart.cloudera/user/cloudera/sqoop_import/avroType/sqoop_import_orders.avsc');
 
 
 CREATE EXTERNAL TABLE products
 STORED AS AVRO
 LOCATION 'hdfs:///user/cloudera/sqoop_import/avroType/products'
-TBLPROPERTIES('avro.schema.url'='hdfs://quickstart.cloudera/user/cloudera/sqoop_import/avroType/sqoop_import_products.avsc')
+TBLPROPERTIES('avro.schema.url'='hdfs://quickstart.cloudera/user/cloudera/sqoop_import/avroType/sqoop_import_products.avsc');
 
 # once tables are created we will run a sample query  to check the performace of the system before partitioning
 # from orders table we will want to group the jan 2014 orders by status
