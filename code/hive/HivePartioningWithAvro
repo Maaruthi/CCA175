@@ -7,7 +7,7 @@ use avrodb;
 CREATE EXTERNAL TABLE departments 
 STORED AS AVRO 
 LOCATION 'hdfs:///user/cloudera/sqoop_import/avroType/departments'
-TBLPROPERTIES('avro.schem.url'='hdfs://quickstart.cloudera/user/cloudera/sqoop_import/avroType/sqoop_import_departments.avsc')
+TBLPROPERTIES('avro.schema.url'='hdfs://quickstart.cloudera/user/cloudera/sqoop_import/avroType/sqoop_import_departments.avsc')
 
 CREATE EXTERNAL TABLE categories 
 STORED AS AVRO
