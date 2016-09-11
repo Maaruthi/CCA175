@@ -93,3 +93,4 @@ select order_id, order_date, order_customer_id, order_status, substr(from_unixti
 hdfs dfs -ls /user/cloudera/sqoop_import/avroType/orders_part/*
 
 --Now run the query to test the performance and see the records read in the counters, performance will definitely improve
+select order_status, count(*) from orders_part_avro where order_month='2014-01' group by order_status;
