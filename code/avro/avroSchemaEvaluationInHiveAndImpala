@@ -1,0 +1,5 @@
+--modifying the avro schema file and introduce two new variables and put into hdfs
+
+-- "invalidate metadata" will invalidate the metadata for all tables in the database 
+-- "refresh departments" will refresh the metadata for the departments table
+-- we cannot insert data into AVRO format using Impala
