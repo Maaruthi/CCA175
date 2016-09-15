@@ -1,0 +1,35 @@
+In RDBMS, 
+  queries are the only way to interact with data
+  schema and data are tightly coupled 
+  when writing data into RDBMS, schema is enforced
+
+In Hadoop,
+  Schema is only on read, so we can dump the data
+  If data is structured, the best way is to use SQL.
+
+If analysts have to run the queries on data in HDFS, they need a querying engine, that is where Hive was introduced by FB.
+To query the data, we should have a schema, so we define schema and that is stored in the metastore.
+
+Hive queries will be submitted from the gateway node generally.
+hive-site.xml will have the location and other details of the metastore and HDFS, Data will be stored in HDFS and metadata i.e., schema and other details will be stored in the metastore
+
+when a hive query is written, hive will compile the query into map reduce code using the information in metastore and will submit the jar, during compilation it will not touch HDFS, once it is compiled the JAR will be submitted as map reduce job into Hadoop cluster. In this case if Spark is used as execution engine, Spark job will be submitted to the cluster.
+
+
+As data and metadata is separated, we can use several tools to work on same data.
+
+Generally Hive is installed on the GateWay node server and hive queries are submitted from this.
+
+hive-site.xml on the edge node will have the details of where the metastore is and where the hdfs is
+
+The hive command given is converted into a map reduce job and a jar is built out of it in the edge node and this is submitted to the cluster to run.
+
+hive-site.xml in /etc/hive/conf will have the details of the warehouse dir(hive.metastore.warehouse.dir) and metastore uris(hive.metastore.uris) 
+	
+TBLS table in the metastore db will have details of the hive tables created and COLUMNS_V2 will have the details of the columns created.
+
+
+
+
+  
+  
