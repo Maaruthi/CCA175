@@ -1,0 +1,33 @@
+--PULL strategy -> connecting to relational databases/any system to pull the data.
+                   This might cause issues as it might overload the systems. i.e., if we are using sqoop to load data from a OLTP database, it might overload the OLTP database.
+--PUSH strategy -> It will be source systems responsibility to provide the data. generally source systems will push the data into staging                 file servers and from there we will load into hadoop
+--SQOOP is generally used for PULL strategy and MR, HIVE , SPARK .. can be used for PUSH strategy
+--Mainframes uses IBM NDM to push the data into staging servers/locations
+
+-- filter the data as much as possible and as early as possible
+--HIVE is used to load data from flat files into HDFS, MR can extend the capabilities of load process
+-------------------------------------------------------------------------------------------------------
+SQOOP 
+    -- data load tool, both in(import) and out of(export) hadoop
+    -- written in Java and open source
+    -- Uses JDBC for DB connectivity
+    -- Uses Map Reduce framework
+    -- sqoop follows map only architecture, so no reduce tasks in import & export
+    -- sqoop is bunch of jar files which does the required tasks
+    -- it is not that secure
+    -- only 3 components in sqoop architecture - source systems, hadoop and sqoop 
+    -- only command line interface
+    -- Map task connects to both DBs and hadoop
+    
+SQOOP2
+    --It uses Client/Server architecture
+    --It uses both map and reduce
+    --avaiable on web and command line
+    --it is highly secure
+    --Admins setup the connectors to the database and developers use the connector ids to connect
+    --Sqoop client(web browser/command line) will connect to the SQOOP Server(this supports REST/UI and has the connectors and metadata) and SQOOP Server is connected to Metadata repository , HDFS/HIVE/HBASE(through reduce task) and DBs(through map task).
+    
+
+
+
+                   
