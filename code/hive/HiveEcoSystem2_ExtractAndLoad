@@ -1,6 +1,10 @@
 --PULL strategy -> connecting to relational databases/any system to pull the data.
                    This might cause issues as it might overload the systems. i.e., if we are using sqoop to load data from a OLTP database, it might overload the OLTP database.
---PUSH strategy -> It will be source systems responsibility to provide the data. generally source systems will push the data into staging                 file servers and from there we will load into hadoop
+--PUSH strategy 
+    -It will be source systems responsibility to provide the data. generally source systems will push the data into staging file servers and from there we will load into hadoop. 
+    -This is the most preferred way for OLTP systems as if we use pull strategy, there are chances that the developer might use more mappers to increase parallelism and cause overload on the critical OLTP systems.
+    -Generally interaction with Mainframe is not that easy and mainframe teams provide the files in the requested format onto the file servers
+    -Third party applications and middle ware technologies like tibco, mq provide the data onto the staged systems.
 --SQOOP is generally used for PULL strategy and MR, HIVE , SPARK .. can be used for PUSH strategy
 --Mainframes uses IBM NDM to push the data into staging servers/locations
 
@@ -28,6 +32,60 @@ SQOOP2
     --Sqoop client(web browser/command line) will connect to the SQOOP Server(this supports REST/UI and has the connectors and metadata) and SQOOP Server is connected to Metadata repository , HDFS/HIVE/HBASE(through reduce task) and DBs(through map task).
     
 
+HIVE(Load)
+    --Files format should match with the table's format - file type(text, sequence ,...) and delimiters(both line and field) should be consistent
+    --Load does not use mapreduce, it uses file system APIs to copy files from local file system/HDFS to HDFS
+    --LOAD DATA [LOCAL] INPATH <filepath> [OVERWRITE] INTO TABLE <tablename> [PARTITION(partcol1=val1, partcol2=val2 ...)]
+      PARTITION will specify to which partition the data has to be copied
+      ex: LOAD DATA LOCAL INPATH '/home/cloudera/test.txt' OVERWRITE INTO TABLE test;
+      
+  Sample Load:
+    --create a text file - ex., words.txt - with single word in each line, that will match to the single column
+    --then create a table with single column - "create table test(t string);"
+    --now load the data - "load data local inpath '/user/cloudera/words.txt' INTO TABLE test;"
+    --check the results - "select * from test;"
 
+ ------------------------------------------------------------------------------------------------------------------------
+ --To demostrate hive load we have to create text files but as it is time consuming to create text files, we will get data from sql database and then load it to hive using hive load, in real world, we will receive these files from upstreams
+    use retail_ods;
+    --use mysql to directly write the file, run this command in sql prompt and make sure that user have permissions to write onto the disk 
+    select * from categories into outfile '/tmp/categories.psv' fields terminated by '|' lines terminated by '\n';
+    --the above command might fail if user does not have required permissions
+    --then login as root
+    mysql -u root -p
+    select user from mysql.user;
+    describe mysql.user;
+    -- File_priv varaiable is by default 'N' 
+    select user,File_priv from mysql.user;
+    update mysql.user set file_priv ='Y' where user = 'retail_dba';
+    commit;
+    exit;
+    -- we have to restart the service for the file permissions to get set properly
+    service mysqld restart
+    --login as retail_dba and run the command, psv is pipe seperated file format extension
+    select * from categories into outfile '/tmp/temp.psv' fields terminated by '|' lines terminated by '\n';
+    select * from categories into outfile '/tmp/temp.csv' fields terminated by ',' lines terminated by '\n';
+    
+    --In hive, delete data from categories table and then load the data
+    load data local inpath '/tmp/temp.csv' into table categories ;
+    --now read the data and we will see all NULL due to the delimiter mismatch but data will be present in the hive direcotry
+    select * from categories;
+    dfs -cat /user/hive/warehouse/categories/* ;
+    --now load the data with correct format ino the hive table
+    load data local inpath '/temp/temp.psv' overwrite into table categories;
+    --now we can see the data
+    select * from categories;
+    -- to append the data, we have to rerun the command without overwrite keyword,  a new file will be created in hdfs table directory with the data along with the existing file.
+    -- If we load the data from HDFS path to hive table, if the user has correct permissions, the HDFS file will be deleted after successful load
+    hdfs dfs -mkdir /user/cloudera/categories
+    hdfs dfs -put /tmp/temp.psv /user/cloudera/categories/.
+    hdfs dfs -ls /user/cloudera/categories/*
+    load data inpath  /user/cloudera/categories/temp.psv overwrite into table categories;
+    --Now if we check the file will be deleted from hdfs
+    hdfs dfs -ls /user/cloudera/categories/*
+    
+ 
+    
+    
 
                    
