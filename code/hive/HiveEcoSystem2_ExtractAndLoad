@@ -1,5 +1,6 @@
---PULL strategy -> connecting to relational databases/any system to pull the data.
-                   This might cause issues as it might overload the systems. i.e., if we are using sqoop to load data from a OLTP database, it might overload the OLTP database.
+--PULL strategy
+    -connecting to relational databases/any system to pull the data.
+    -This might cause issues as it might overload the systems. i.e., if we are using sqoop to load data from a OLTP database, it might overload the OLTP database.
 --PUSH strategy 
     -It will be source systems responsibility to provide the data. generally source systems will push the data into staging file servers and from there we will load into hadoop. 
     -This is the most preferred way for OLTP systems as if we use pull strategy, there are chances that the developer might use more mappers to increase parallelism and cause overload on the critical OLTP systems.
@@ -83,6 +84,39 @@ HIVE(Load)
     load data inpath  /user/cloudera/categories/temp.psv overwrite into table categories;
     --Now if we check the file will be deleted from hdfs
     hdfs dfs -ls /user/cloudera/categories/*
+    
+-If the hive table has more columns or if partitioning exists on the tables or if there are file format changes we cannot use the HIVE LOAD, we have to use INSERT in this case.
+    
+HIVE INSERT
+    --Insert command is used to select data from one table to another table or partition of another table.
+    --we can apply transformations, data cleansing, filtering etc.
+    --the source and destination tables can be in different formats.
+    --in INSERT OVERWRITE old files will be deleted
+    --INSERT INTO will not delete the old files, it simulates append
+    --An output of a query should be inserted into the table
+    --we can insert into bucketed tables and also partitioned tables(both dynamic and static)
+    --hive.exec.dynamic.partition needs to be set to 'TRUE' to enable dynamic partition inserts, default is FALSE
+    --hive.exec.dynamic.partition.mode - In 'strict' mode, user must specify at least one static partition in case the user overwrites all partitions, in 'nonstrict' mode all partitions are allowed to be dynamic. default is 'strict'
+    --hive.exec.max.dynamic.partitions.pernode - maximum number of dynamic partitions allowed to be created in each mapper/reducer node,  default is 100
+    --hive.exec.max.dynamic.partitions - maximum number of dynamic partitions allowed to be created in total, default is 1000
+    --hive.exec.max.created.files - maximum number of HDFS files created by all mappers/reducers in MapReduce job, default is 100000
+    --hive.error.on.empty.partition - whether to throw an exception if dynamic partition insert generates empty results, default is FALSE
+    
+Differences between HIVE LOAD and HIVE INSERT:
+    --LOAD will use file system APIs, while INSERT uses map reduce jobs/tej/spark
+    --LOAD is to copy files from local/HDFS to HDFS , while insert is to copy from one table to another
+    insert overwrite table products select * from products;
+
+Differences between HIVE LOAD/INSERT Vs RDBMS
+    --we cannot specify columns on insert/load
+    --does not support update/delete, we have to load the delta and do outer joins if needed
+    --schema on read, so we should be very carefull while writing the data, user has to make sure the schema matches while writing
+    --no transactions, so no commit or redo log
+    
+--Data quality is generally taken care by hive, if it is not doing that as expected, we might have to do it with execution engines
+
+--hive-execution-engine can be used to change execution engine, ex., mr
+
     
  
     
