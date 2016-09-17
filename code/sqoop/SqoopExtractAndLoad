@@ -41,7 +41,7 @@ sqoop import --connect="jdbc:mysql://quickstart.cloudera:3306/retail_db" \
 --target-dir "/user/cloudera/sqoop_import/departments" \
 --fields-terminated-by '|' \
 --lines-terminated-by '\n' \
---out-dir java_files
+--outdir java_files
 while using the delimiters, we should be very careful, the delimiters specified while importing the data should match with the ones used while creating the hive tables.
 -------------------------------------------------------------------------------------------------------------------
 --Importing table without a primary key using multiple threads, when using split-by, we have to use indexed column, otherwise full table scan is done by each thread and performance will be very bad.
@@ -54,7 +54,7 @@ sqoop import --connect "jdbc:mysql://quickstart.cloudera:3306/retail_db" \
 --append \
 --fields-terminated-by '|' \
 --lines-terminated-by '\n' \
---out-dir java_files
+--outdir java_files
 -------------------------------------------------------------------------------------------------------------------
 Getting Delta using where clause
 sqoop import --connect="jdbc:mysql://quickstart.cloudera:3306/retail_db" \
@@ -89,7 +89,9 @@ sqoop import --connect "jdbc:mysql://quickstart.cloudera:3306/retail_db" \
 --hive-import \
 --hive-home "/user/hive/warehouse" \
 --hive-table departments \
---use-dir java_files
+--outdir java_files
+
+------------------------------------------------------------------------------------------------------------------------
 
 
 
