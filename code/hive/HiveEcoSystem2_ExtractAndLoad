@@ -117,6 +117,31 @@ Differences between HIVE LOAD/INSERT Vs RDBMS
 
 --hive-execution-engine can be used to change execution engine, ex., mr
 
+    -------------------------------------------------------------------------------------------------------------
+    drop retail_ods_stage cascade;
+    --retail_stage is the first place to load all the data from databases, from here it is loaded to ODS tables
+    --schema of tables in retail_stage should match with the schema of sql tables
+    
+ First we will load from mysql to table under retail_stage database and from there we will load to retail_ods database
+    select * from orders into outfile '/tmp/orders.psv' fields terminated by '|' lines terminated by '\n';
+    use retail_stage;
+    -- we are creating a staging table 
+    create table orders_stage(order_id int, order_date string, order_customer_id int, order_status string) row format delimited fields terminated by '|'stored as textfile;
+    load data local inpath '/tmp/orders.psv' into table orders_stage;
+    select * from orders_stage limit 10;
+    --we have to check the hive.exec.dynamic.partition and hive.exec.dynamic.partition.mode  properties, former one should be 'true' and the later one should be 'nonstrict' in this case.
+    set hive.execute.dynamic.partition=true;
+    set hive.execute.dynamic.partition.mode=nonstrict;
+    --now check if there is any data in ods table and load into ods table
+    insert overwrite table retail_ods.orders partition(order_month) select order_id , order_date , order_customer_id , order_status, substr(order_date, 1,7) order_month from retail_stage.orders_stage
+    
+    --loading data for order_items table, there are two ways to load the data into the retail_ods.order_items table, we can do the join in sql, copy the file to stage db and load it or we can load the data into stage and join it while loading to ods, second way is the better as join happends in hive and hadoop
+    -- check if the data exists in the order_items table, if not load it from sql db using hive load.
+    
+    use retail_ods;
+    insert overwrite table order_items partition(order_month) select oi.order_item_id, oi.order_item_order_id, o.order_date, oi.order_item_product_id, oi.order_item_quantity, oi.order_item_subtotal, oi.order_item_product_price, substr(o.order_date,1,7) order_month from retail_stage.orders_stage o join retail_stage.order_items oi on o.order_id = oi.order_item_order_id; 
+    select count(1) from order_items;
+    select * from order_items limit 10;
     
  
     
