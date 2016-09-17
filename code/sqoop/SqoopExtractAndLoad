@@ -1,0 +1,96 @@
+--sqoop import is to get data from relational databases, nosql databases and document based databases
+--default number of mappers is 4
+-- when there are n number of mappers, n number of concurrent connections are made to the database to read mutually exclusive data using the ranges decided by using the min and max values of the primary key.
+Execution steps 
+ 	--Generates custom DBWritable class reading metadata of table
+	--Connect to database - default 4 concurrent connections
+	--Read and split the table data using custom DBWritable class
+	--Load data into HDFS
+Split logic 
+	-- Uses primary key or unique key, if there is no primary key we have to use --split-by or -m 1, otherwise import will fail.
+	--Get minimum and maximum values
+	--Compute ranges based on the number of map tasks(default 4)
+	--Process mutually exclusive data in parallel
+--  Sqoop supports incremental import using the three parameters  --check-column(col), --incremental-mode(this tells the mode - append or lastmodified), --last-value (value of the last field)
+Sqoop Export
+	--Sqoop export is to get data out of hadoop based systems into conventional databases/NoSql data stores.
+	--It also uses Map/Reduce framework
+	--At this time it only understands HDFS directories not Hive tables(HCatalog)
+	--It also splits the data (but uses HDFS splittable logic)
+Sqoop Considerations
+	--Need to customize to leverage strengths of underlying sources or target conventional databases. For ex., if target database is Oracle and if we want to load database using parallel threads, then we have to increase Oracle INITRANS(initial transaction value, defaults to '1' for table and '2' for indexes) to get the desired parallelism.
+	--Determining number of mappers and outliers/skew(we can use --where clause along with import to filter the outliers) is the key
+	-- To use binary data, we have to use sequence files(--as-sequence files)
+	--we have to consider compression  when dealing with huge data
+-------------------------------------------------------------------------------------------------------------------
+--sequence file stores data in binary  format where as avro file stores data in json format
+--Basic Import
+sqoop import --connect="jdbc:mysql://quickstart.cloudera:3306/retail_db"
+--username retail_dba
+--password cloudera
+--table departments
+--target-dir "/user/cloudera/sqoop_import/departments"
+-------------------------------------------------------------------------------------------------------------------
+--Loading data into an existing table, with customized number of threads and changing delimiter
+sqoop import --connect="jdbc:mysql://quickstart.cloudera:3306/retail_db" \
+--username retail_dba \
+--password cloudera \
+--table departments \
+--append \
+--num-mappers 2 \
+--target-dir "/user/cloudera/sqoop_import/departments" \
+--fields-terminated-by '|' \
+--lines-terminated-by '\n' \
+--out-dir java_files
+while using the delimiters, we should be very careful, the delimiters specified while importing the data should match with the ones used while creating the hive tables.
+-------------------------------------------------------------------------------------------------------------------
+--Importing table without a primary key using multiple threads, when using split-by, we have to use indexed column, otherwise full table scan is done by each thread and performance will be very bad.
+sqoop import --connect "jdbc:mysql://quickstart.cloudera:3306/retail_db" \
+--username retail_dba \
+--password cloudera \
+--table departments \
+--target-dir "/user/cloudera/sqoop_import/departments" \
+--split-by department_id \
+--append \
+--fields-terminated-by '|' \
+--lines-terminated-by '\n' \
+--out-dir java_files
+-------------------------------------------------------------------------------------------------------------------
+Getting Delta using where clause
+sqoop import --connect="jdbc:mysql://quickstart.cloudera:3306/retail_db" \
+--username retail_dba \
+--password cloudera \
+--table departments \
+--append \
+--where "department_id > 7 " \
+--outdir java_files
+-------------------------------------------------------------------------------------------------------------------
+we can also pass --query in plae of --table to import the data.
+Hive Related
+Overwrite existing data associated with hive table(hive-overwrite)
+sqoop import --connect "jdbc:mysql://quickstart.cloudera:3306/retail_db" \
+--username retail_dba \
+--password cloudera \
+--table departments \
+--hive-import \
+--hive-home "/user/hive/warehouse" \
+--hive-overwrite \
+--hive-table retail_db.departments \
+--outdir java_files
+when using hive import, an intermediate directory will be created in the users home directory with table name.
+
+---------------------------------------------------------------------------------------------------------
+creating hive table during import
+sqoop import --connect "jdbc:mysql://quickstart.cloudera:3306/retail_db" \
+--username retail_dba \
+--password cloudera \
+--table departments \
+--create-hive-table \
+--hive-import \
+--hive-home "/user/hive/warehouse" \
+--hive-table departments \
+--use-dir java_files
+
+
+
+
