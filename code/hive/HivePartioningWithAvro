@@ -81,16 +81,18 @@ PARTITIONED BY(order_month string)
 STORED AS AVRO
 LOCATION 'hdfs:///user/cloudera/sqoop_import/avroType/orders_part'
 TBLPROPERTIES('avro.schema.url'='hdfs://quickstart.cloudera/user/cloudera/sqoop_import/avroType/orders_part_avro.avsc');
--- once table is created, we can do dynamic partitioning and here we have to specify all the column names that we need, we may not be able to use *
+-- once table is created, we can do dynamic partitioning and here we have to specify all the column names that we need
 -- hive.exec.max.dynamic.partitions.pernode will set the number of partitions per node. As we are using a single node vm, if the    partitions increase 100, the above dynamic parition query will fail, so, set it to 1000
 set hive.exec.max.dynamic.partitions.pernode=1000;
-
 -- if the below property is strict, it expects atleast one column in the partition before we do this
 set hive.exec.dynamic.partition.mode=nonstrict;
 insert into table orders_part_avro partition(order_month)
 select order_id, order_date, order_customer_id, order_status, substr(from_unixtime(cast(substr(order_date, 1,10) as int)),1,7) as order_month from orders;
+--we can write the above command without repeating the columns, 'select *, substr(from_unixtime(cast(substr(order_date, 1,10) as int)),1,7) as order_month from orders;'
 --validating the directories
 dfs -ls /user/cloudera/sqoop_import/avroType/orders_part/* ;
 
 --Now run the query to test the performance and see the records read in the counters, performance will definitely improve
 select order_status, count(*) from orders_part_avro where order_month='2014-01' group by order_status;
+--Observed that after partitioning, if we do a simple select on the partitioned column, map reduce jobs will not be used.
+   ex., for 'select * from orders_part_avro limit 10 ' map reduce job will not be launched
