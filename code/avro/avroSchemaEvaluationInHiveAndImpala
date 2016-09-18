@@ -1,5 +1,11 @@
 --modifying the avro schema file and introduce two new variables and put into hdfs
+--Now the table will fail to load the data as there is no data for the new fields. So, either we can load the data or give defaults in the avro schema, like 'default' : -1
+--Now the default values will be showed to the fields when queried for.
+
+--we can insert a row with all the fields
+insert into table departments values(1000,10000, 'testing', null);
+--after this insert a new file will be created on the hdfs with  the new fields and the newly inserted data
 
 -- "invalidate metadata" will invalidate the metadata for all tables in the database 
 -- "refresh departments" will refresh the metadata for the departments table
--- we cannot insert data into AVRO format using Impala
+-- we cannot insert data into AVRO format using Impala 2.5
